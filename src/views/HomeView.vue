@@ -1,8 +1,4 @@
-vue
-<script setup>
-import PhoneAuth from '@/components/PhoneAuth.vue'
-</script>
-
+<!-- src/views/HomeView.vue -->
 <template>
-  <PhoneAuth />
+  <h1>Home View</h1>
 </template>
