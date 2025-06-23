@@ -1,0 +1,18 @@
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      { "source": "/", "destination": "/index.html" },
+      { "source": "/login.html", "destination": "/login.html" },
+      { "source": "/dashboard.html", "destination": "/dashboard.html" },
+      { "source": "/silver.html", "destination": "/silver.html" },
+      { "source": "/platinum.html", "destination": "/platinum.html" },
+      { "source": "/intern.html", "destination": "/intern.html" }
+    ]
+  }
+}
