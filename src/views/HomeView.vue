@@ -1,4 +1,7 @@
-<!-- src/views/HomeView.vue -->
 <template>
-  <h1>Home View</h1>
+  <LoginRegister />
 </template>
+
+<script setup lang="ts">
+import LoginRegister from '@/components/LoginRegister.vue';
+</script>
