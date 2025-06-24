@@ -5,36 +5,57 @@
       Withdrawal History
     </div>
 
-    <div class="content-area">
-      <div v-if="history.length">
-        <div v-for="(item, index) in history" :key="index" class="history-item">
-          <p><strong>Amount:</strong> KES {{ item.amount }}</p>
-          <p><strong>Status:</strong> {{ item.status }}</p>
-          <p><strong>Date:</strong> {{ item.date }}</p>
-        </div>
-      </div>
-      <div v-else>
-        <p>No withdrawals yet.</p>
+    <div class="history-list" v-if="withdrawals.length">
+      <div v-for="(withdrawal, index) in withdrawals" :key="index" class="history-item">
+        <p><strong>Amount:</strong> KES {{ withdrawal.amount }}</p>
+        <p><strong>Status:</strong> {{ withdrawal.status }}</p>
+        <p><strong>Date:</strong> {{ formatDate(withdrawal.timestamp) }}</p>
+        <p><strong>Time:</strong> {{ formatTime(withdrawal.timestamp) }}</p>
       </div>
     </div>
+    <p v-else class="no-records">No withdrawals found.</p>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ref as dbRef, onValue } from "firebase/database";
+import { database, auth } from '@/firebase';
 
 const router = useRouter()
-const history = ref([])
+const withdrawals = ref([])
 
-onMounted(() => {
-  const storedHistory = JSON.parse(localStorage.getItem('withdrawHistory') || '[]')
-  history.value = storedHistory
-})
+const fetchWithdrawals = () => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) return;
+
+  const userWithdrawalsRef = dbRef(database, `withdrawals/${userId}`);
+  onValue(userWithdrawalsRef, (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      withdrawals.value = Object.values(data);
+    } else {
+      withdrawals.value = [];
+    }
+  });
+};
+
+const formatDate = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleDateString();
+};
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString();
+};
 
 const goBack = () => {
-  router.push('/withdraw')
-}
+  router.push('/withdraw');
+};
+
+onMounted(fetchWithdrawals);
 </script>
 
 <style scoped>
@@ -59,18 +80,24 @@ const goBack = () => {
   position: absolute;
   left: 10px;
   top: 10px;
-  font-size: 18px;
   cursor: pointer;
+  font-size: 18px;
 }
-.content-area {
-  flex: 1;
+.history-list {
   padding: 20px;
+  flex: 1;
+  overflow-y: auto;
 }
 .history-item {
-  background: #fff;
-  padding: 10px;
-  margin: 10px 0;
+  background: #e0f7fa;
   border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
   box-shadow: 0 0 5px rgba(0,0,0,0.1);
+}
+.no-records {
+  text-align: center;
+  margin-top: 30px;
+  color: #777;
 }
 </style>

@@ -36,7 +36,7 @@
 
       <button class="submit-btn" @click="submitWithdrawal">Submit</button>
 
-      <p v-if="showPopup" class="popup">{{ statusMessage }}</p>
+      <p v-if="statusMessage" class="status">{{ statusMessage }}</p>
     </div>
   </div>
 </template>
@@ -44,6 +44,8 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ref as dbRef, push, set } from "firebase/database";
+import { database, auth } from '@/firebase';
 
 const router = useRouter()
 const amounts = [500, 1000, 2000, 5000, 10000, 20000, 50000, 100000]
@@ -51,7 +53,6 @@ const selectedAmount = ref(null)
 const password = ref('')
 const showPassword = ref(false)
 const statusMessage = ref('')
-const showPopup = ref(false)
 
 const selectAmount = (amount) => {
   selectedAmount.value = amount
@@ -61,36 +62,35 @@ const togglePassword = () => {
   showPassword.value = !showPassword.value
 }
 
-const submitWithdrawal = () => {
+const submitWithdrawal = async () => {
   if (!selectedAmount.value) {
     statusMessage.value = 'Please select an amount.'
-    showPopup.value = true
-    setTimeout(() => showPopup.value = false, 2000)
     return
   }
   if (!/^\d{6}$/.test(password.value)) {
     statusMessage.value = 'Transaction password must be exactly 6 digits.'
-    showPopup.value = true
-    setTimeout(() => showPopup.value = false, 2000)
     return
   }
 
-  const historyRecord = {
-    amount: selectedAmount.value,
-    status: 'Processing',
-    date: new Date().toLocaleString()
+  const userId = auth.currentUser.uid;
+
+  try {
+    const newRef = push(dbRef(database, `withdrawals/${userId}`));
+    await set(newRef, {
+      amount: selectedAmount.value,
+      status: 'Processing',
+      timestamp: Date.now()
+    });
+
+    statusMessage.value = 'Successful withdrawal request sent...';
+
+    setTimeout(() => {
+      statusMessage.value = '';
+    }, 2000);
+  } catch (error) {
+    statusMessage.value = 'Error processing withdrawal.';
+    console.error(error);
   }
-
-  const existingHistory = JSON.parse(localStorage.getItem('withdrawHistory') || '[]')
-  existingHistory.push(historyRecord)
-  localStorage.setItem('withdrawHistory', JSON.stringify(existingHistory))
-
-  statusMessage.value = 'Withdrawal submitted!'
-  showPopup.value = true
-  setTimeout(() => {
-    showPopup.value = false
-    statusMessage.value = ''
-  }, 2000)
 }
 
 const goToHistory = () => {
@@ -120,15 +120,24 @@ const goBack = () => {
   font-weight: bold;
   position: relative;
 }
-.back-icon, .history-icon {
+.back-icon {
   position: absolute;
+  left: 10px;
   top: 10px;
-  font-size: 18px;
   cursor: pointer;
+  font-size: 18px;
 }
-.back-icon { left: 10px; }
-.history-icon { right: 10px; }
-.content-area { flex: 1; padding: 20px; }
+.history-icon {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  font-size: 18px;
+}
+.content-area {
+  flex: 1;
+  padding: 20px;
+}
 .amount-options {
   display: flex;
   flex-wrap: wrap;
@@ -145,7 +154,9 @@ const goBack = () => {
   background: #4caf50;
   color: white;
 }
-.password-input { margin: 20px 0; }
+.password-input {
+  margin: 20px 0;
+}
 .password-input label {
   display: block;
   margin-bottom: 5px;
@@ -164,6 +175,7 @@ const goBack = () => {
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
+  font-size: 18px;
 }
 .submit-btn {
   width: 100%;
@@ -173,9 +185,9 @@ const goBack = () => {
   border: none;
   border-radius: 8px;
 }
-.popup {
-  color: green;
+.status {
   margin-top: 10px;
+  color: green;
   text-align: center;
 }
 </style>

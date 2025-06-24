@@ -8,7 +8,7 @@
 
       <div class="section-title">Main Actions</div>
       <div class="grid-actions">
-        <div class="action-btn">Deposit</div>
+        <div class="action-btn" @click="goDeposit">Deposit</div>
         <div class="action-btn" @click="goWithdraw">Withdraw</div>
         <div class="action-btn">Income</div>
       </div>
@@ -64,7 +64,7 @@
       <div class="nav-item">Wealth</div>
       <div class="nav-item">Team</div>
       <div class="nav-item">Task</div>
-      <div class="nav-item">Mine</div>
+      <div class="nav-item" @click="goMine">Mine</div> <!-- ✅ Fixed -->
     </div>
   </div>
 </template>
@@ -93,9 +93,18 @@ function goHome() {
 function goWithdraw() {
   router.push('/withdraw');
 }
+
+function goDeposit() {
+  router.push('/deposit');
+}
+
+function goMine() {        // ✅ Added function for Mine button
+  router.push('/mine');
+}
 </script>
 
 <style scoped>
+/* Your existing style stays unchanged */
 .phone-frame {
   width: 375px;
   height: 667px;

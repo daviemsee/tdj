@@ -1,4 +1,3 @@
-```vue
 <template>
   <div class="register">
     <h2>Step {{ step }}</h2>
@@ -23,13 +22,20 @@
           <li><strong>Phone:</strong> {{ form.phone }}</li>
         </ul>
       </div>
-<button type="submit">{{ step < 3 ? 'Next' : 'Submit' }}</button>
+
+      <button type="submit">{{ step < 3 ? 'Next' : 'Submit' }}</button>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { doc, setDoc } from 'firebase/firestore'
+import { auth, database as db } from '../firebase' // Adjust path if needed
+
+const router = useRouter()
 
 const step = ref(1)
 const form = ref({
@@ -48,9 +54,6 @@ function nextStep() {
   }
 }
 
-import { createUserWithEmailAndPassword } from 'firebase/auth'
-import { auth } from '../firebase'
-
 async function registerUser() {
   try {
     const userCredential = await createUserWithEmailAndPassword(
@@ -58,27 +61,26 @@ async function registerUser() {
       form.value.email,
       form.value.password
     )
-    console.log('User registered:', userCredential.user)
-    // Redirect or show success message
+    const user = userCredential.user
+
+    // ✅ Save user details to Firestore
+    await setDoc(doc(db, 'users', user.uid), {
+      userId: form.value.phone, // 👈 phone stored as userId for MineView
+      fullName: form.value.fullName,
+      email: form.value.email,
+      referralCode: form.value.referralCode,
+      creditScore: 0,
+      level: 'Intern',
+      userTitle: 'New User',
+      effectiveDate: new Date().toISOString(),
+      walletBalance: 0
+    })
+
+    console.log('User registered and data saved to Firestore!')
+    router.push('/dashboard') // redirect to dashboard after registration
   } catch (error) {
     alert(error.message)
+    console.error('Registration error:', error)
   }
 }
 </script>
-
-
----
-
-Step 3: Add Route
-
-In `src/router/index.js`, add:
-
-js
-{
-  path: '/register',
-  name: 'Register',
-  component: () => import('../views/Register.vue')
-}
-```
-
----
